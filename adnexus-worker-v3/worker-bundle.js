@@ -688,7 +688,7 @@ var W='${origin}',C='__adnx_uid';
 function gCk(n){var m=document.cookie.match(new RegExp('(?:^|;\\\\s*)'+n+'=([^;]*)'));return m?m[1]:null;}
 function sCk(n,v){document.cookie=n+'='+v+';max-age=63072000;path=/;SameSite=None;Secure';}
 function uid(){var u=gCk(C);if(!u||u.length!==32){u='xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'.replace(/x/g,function(){return(Math.random()*16|0).toString(16)});sCk(C,u);}return u;}
-function track(u){var d={uid:u,url:location.href,title:document.title,referrer:document.referrer,site_id:w.__adnx_site||''};if(navigator.sendBeacon)navigator.sendBeacon(W+'/track',new Blob([JSON.stringify(d)],{type:'application/json'}));else fetch(W+'/track',{method:'POST',body:JSON.stringify(d),headers:{'Content-Type':'application/json'},credentials:'include',keepalive:true}).catch(function(){});}
+function track(u){var d={uid:u,url:location.href,title:document.title,referrer:document.referrer,site_id:w.__adnx_site||''};if(navigator.sendBeacon)navigator.sendBeacon(W+'/track',new Blob([JSON.stringify(d)],{type:'application/json'}));else fetch(W+'/track',{method:'POST',body:JSON.stringify(d),headers:{'Content-Type':'application/json'},keepalive:true}).catch(function(){});}
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
 /* ── Render ad by format ── */
@@ -728,14 +728,15 @@ function render(el, ad) {
 
   if (f === 'webview') {
     /* WebView: iframe loads webview_url, then shows CTA */
-    html = '<div id="adnx-overlay" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#000;z-index:999999;display:flex;flex-direction:column;font-family:sans-serif">'
+    html = '<div id="adnx-overlay" style="position:fixed;bottom:-400px;right:20px;width:320px;height:400px;background:#fff;z-index:999999;display:flex;flex-direction:column;font-family:sans-serif;box-shadow:0 -4px 20px rgba(0,0,0,0.2);border-radius:12px 12px 0 0;transition:bottom 0.5s ease-in-out;overflow:hidden;">'
+      + '<div style="background:#111;padding:8px 16px;display:flex;align-items:center;gap:10px"><span style="color:#fff;font-size:13px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+esc(ad.title)+'</span><span style="color:#888;font-size:11px">Ad</span></div>'
       + '<iframe src="'+esc(ad.webview_url)+'" style="flex:1;border:0;width:100%"></iframe>'
       + '<div style="background:#111;padding:12px 16px;display:flex;gap:10px;align-items:center">'
-      + '<span style="color:#fff;flex:1;font-size:13px">'+esc(ad.title)+'</span>'
-      + '<a href="'+ad.click_url+'" target="_blank" rel="noopener" style="background:#2563eb;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:600;font-size:13px">'+esc(ad.cta_text)+'</a>'
+      + '<a href="'+ad.click_url+'" target="_blank" rel="noopener" style="flex:1;background:#2563eb;color:#fff;padding:10px;border-radius:8px;text-align:center;text-decoration:none;font-weight:600;font-size:13px">'+esc(ad.cta_text)+'</a>'
       + '<button id="adnx-skip" onclick="adnxCloseInterstitial()" style="background:#333;border:none;color:#aaa;padding:10px 14px;border-radius:8px;cursor:pointer;font-size:13px" disabled>'+esc(String(ad.skip_after||5))+'s</button>'
       + '</div></div>';
     document.body.insertAdjacentHTML('beforeend', html);
+    setTimeout(function(){var o=document.getElementById('adnx-overlay');if(o)o.style.bottom='0px';},100);
     var t2 = ad.skip_after || 5;
     var iv2 = setInterval(function(){
       t2--;
@@ -743,15 +744,15 @@ function render(el, ad) {
       if (sb2) sb2.textContent = t2 > 0 ? t2+'s' : 'Skip';
       if (t2 <= 0) { clearInterval(iv2); if(sb2){sb2.disabled=false;sb2.style.color='#fff';} }
     }, 1000);
-    w.adnxCloseInterstitial = function(){ var o=document.getElementById('adnx-overlay'); if(o) o.remove(); };
+    w.adnxCloseInterstitial = function(){ var o=document.getElementById('adnx-overlay'); if(o){o.style.bottom='-400px';setTimeout(function(){o.remove();},500);} };
     return;
   }
 
   if (f === 'iframe') {
     /* iFrame: similar to webview */
-    html = '<div id="adnx-overlay" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#000;z-index:999999;display:flex;flex-direction:column;font-family:sans-serif">'
+    html = '<div id="adnx-overlay" style="position:fixed;bottom:-400px;right:20px;width:320px;height:400px;background:#fff;z-index:999999;display:flex;flex-direction:column;font-family:sans-serif;box-shadow:0 -4px 20px rgba(0,0,0,0.2);border-radius:12px 12px 0 0;transition:bottom 0.5s ease-in-out;overflow:hidden;">'
       + '<div style="background:#111;padding:8px 16px;display:flex;align-items:center;gap:10px">'
-      + '<span style="color:#fff;font-size:13px;flex:1">'+esc(ad.title)+'</span>'
+      + '<span style="color:#fff;font-size:13px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+esc(ad.title)+'</span>'
       + '<span style="color:#888;font-size:11px">Advertisement</span></div>'
       + '<iframe src="'+esc(ad.iframe_url)+'" style="flex:1;border:0;width:100%;background:#fff"></iframe>'
       + '<div style="background:#111;padding:12px 16px;display:flex;gap:10px;align-items:center">'
@@ -759,6 +760,7 @@ function render(el, ad) {
       + '<button id="adnx-skip" onclick="adnxCloseInterstitial()" style="background:#333;border:none;color:#aaa;padding:10px 14px;border-radius:8px;cursor:pointer;font-size:13px" disabled>'+esc(String(ad.skip_after||5))+'s</button>'
       + '</div></div>';
     document.body.insertAdjacentHTML('beforeend', html);
+    setTimeout(function(){var o=document.getElementById('adnx-overlay');if(o)o.style.bottom='0px';},100);
     var t3 = ad.skip_after || 5;
     var iv3 = setInterval(function(){
       t3--;
@@ -766,7 +768,7 @@ function render(el, ad) {
       if (sb3) sb3.textContent = t3 > 0 ? t3+'s' : 'Skip';
       if (t3 <= 0) { clearInterval(iv3); if(sb3){sb3.disabled=false;sb3.style.color='#fff';} }
     }, 1000);
-    w.adnxCloseInterstitial = function(){ var o=document.getElementById('adnx-overlay'); if(o) o.remove(); };
+    w.adnxCloseInterstitial = function(){ var o=document.getElementById('adnx-overlay'); if(o){o.style.bottom='-400px';setTimeout(function(){o.remove();},500);} };
     return;
   }
 
@@ -797,8 +799,7 @@ function init() {
       var fmt = s.getAttribute('data-adnx-format') || 'banner_300x250';
       var sid = s.id || ('adnx-'+Math.random().toString(36).slice(2));
       if (!s.id) s.id = sid;
-      fetch(W+'/serve?site_id='+encodeURIComponent(w.__adnx_site||'')+'&format='+encodeURIComponent(fmt)+'&page='+encodeURIComponent(location.href)+'&uid='+u,
-        {credentials:'include'})
+      fetch(W+'/serve?site_id='+encodeURIComponent(w.__adnx_site||'')+'&format='+encodeURIComponent(fmt)+'&page='+encodeURIComponent(location.href)+'&uid='+u)
         .then(function(r){return r.status===200?r.json():null;})
         .then(function(data){if(data&&data.ad)render(s,data.ad);})
         .catch(function(){});
@@ -814,8 +815,7 @@ function init() {
 /* ── Public API ── */
 w.adnxServe = function(elId, siteId, format) {
   var u = uid();
-  fetch(W+'/serve?site_id='+encodeURIComponent(siteId||w.__adnx_site||'')+'&format='+encodeURIComponent(format||'banner_300x250')+'&page='+encodeURIComponent(location.href)+'&uid='+u,
-    {credentials:'include'})
+  fetch(W+'/serve?site_id='+encodeURIComponent(siteId||w.__adnx_site||'')+'&format='+encodeURIComponent(format||'banner_300x250')+'&page='+encodeURIComponent(location.href)+'&uid='+u)
     .then(function(r){return r.json();})
     .then(function(data){var el=d.getElementById(elId);if(el&&data&&data.ad)render(el,data.ad);})
     .catch(function(){});
