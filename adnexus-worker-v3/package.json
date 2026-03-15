@@ -1,0 +1,14 @@
+{
+  "name": "adnexus-worker",
+  "version": "3.0.0",
+  "description": "AdNexus Ad Network Worker — Google Ads Alternative",
+  "main": "src/index.js",
+  "scripts": {
+    "dev":    "wrangler dev",
+    "deploy": "wrangler deploy",
+    "tail":   "wrangler tail"
+  },
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  }
+}

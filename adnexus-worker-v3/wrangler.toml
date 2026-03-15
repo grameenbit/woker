@@ -1,0 +1,30 @@
+name = "adnexus-worker"
+main = "worker-bundle.js"
+compatibility_date = "2024-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+SUPABASE_URL      = "https://ipigtnsrkbnyeozfuqnk.supabase.co"
+COOKIE_DOMAIN     = "fuyadheart.workers.dev"
+AI_APP_ID         = "language-industry"
+
+# KV Namespaces
+[[kv_namespaces]]
+binding = "AD_CACHE"
+id      = "9b07a907e8fa470c846e35da0428afd7"
+
+[[kv_namespaces]]
+binding = "USER_PROFILES"
+id      = "e68a37e25c7e4742a0582f1242c90504"
+
+[[kv_namespaces]]
+binding = "RATE_LIMIT"
+id      = "e0f986206905482d8491df514866cdcc"
+
+[[kv_namespaces]]
+binding = "FRAUD_KV"
+id      = "22424ed35aaa4e26bb0ee983c7de3298"
+
+# Secrets — set via GitHub Actions secrets:
+#   SUPABASE_SERVICE_KEY
+#   (No Anthropic key needed — uses free buildpicoapps AI)
