@@ -5,6 +5,7 @@ compatibility_flags = ["nodejs_compat"]
 
 [vars]
 SUPABASE_URL      = "https://xyfmglrpechwuaupiuqh.supabase.co"
+SUPABASE_ANON_KEY     = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh5Zm1nbHJwZWNod3VhdXBpdXFoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzMjU0MTIsImV4cCI6MjA4ODkwMTQxMn0.WMCrygH2a3PNRFV0kiQ8qiGQ9gAVqS2odJF6TSt-Q9o"
 COOKIE_DOMAIN     = "fuyadheart.workers.dev"
 AI_APP_ID         = "language-industry"
 
