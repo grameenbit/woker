@@ -4,7 +4,7 @@ compatibility_date = "2024-01-01"
 compatibility_flags = ["nodejs_compat"]
 
 [vars]
-SUPABASE_URL      = "https://ipigtnsrkbnyeozfuqnk.supabase.co"
+SUPABASE_URL      = "https://xyfmglrpechwuaupiuqh.supabase.co"
 COOKIE_DOMAIN     = "fuyadheart.workers.dev"
 AI_APP_ID         = "language-industry"
 
