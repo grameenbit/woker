@@ -48,7 +48,7 @@ function gCk(n){var m=document.cookie.match(new RegExp('(?:^|;\\\\s*)'+n+'=([^;]
 function sCk(n,v){document.cookie=n+'='+v+';max-age=63072000;path=/;SameSite=None;Secure';}
 function uid(){var u=gCk(C);if(!u||u.length!==32){u='xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'.replace(/x/g,function(){return(Math.random()*16|0).toString(16)});sCk(C,u);}return u;}
 /* ── Track page view ── */
-function track(u){var d={uid:u,url:location.href,title:document.title,referrer:document.referrer,site_id:w.__adnx_site||''};if(navigator.sendBeacon)navigator.sendBeacon(W+'/track',new Blob([JSON.stringify(d)],{type:'application/json'}));else fetch(W+'/track',{method:'POST',body:JSON.stringify(d),headers:{'Content-Type':'application/json'},credentials:'include',keepalive:true}).catch(function(){});}
+function track(u){var d={uid:u,url:location.href,title:document.title,referrer:document.referrer,site_id:w.__adnx_site||''};if(navigator.sendBeacon)navigator.sendBeacon(W+'/track',new Blob([JSON.stringify(d)],{type:'application/json'}));else fetch(W+'/track',{method:'POST',body:JSON.stringify(d),headers:{'Content-Type':'application/json'},keepalive:true}).catch(function(){});}
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 /* ── Render ad by format ── */
 function render(el,ad){
@@ -73,15 +73,16 @@ function render(el,ad){
   if(f==='webview'||f==='iframe'){
     var iUrl=f==='webview'?ad.webview_url:ad.iframe_url;
     document.body.insertAdjacentHTML('beforeend',
-      '<div id="adnx-ol" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#000;z-index:999999;display:flex;flex-direction:column;font-family:sans-serif">'
-      +'<div style="background:#111;padding:8px 16px;display:flex;align-items:center;gap:10px"><span style="color:#fff;font-size:13px;flex:1">'+esc(ad.title)+'</span><span style="color:#888;font-size:11px">Ad</span></div>'
+      '<div id="adnx-ol" style="position:fixed;bottom:-400px;right:20px;width:320px;height:400px;background:#fff;z-index:999999;display:flex;flex-direction:column;font-family:sans-serif;box-shadow:0 -4px 20px rgba(0,0,0,0.2);border-radius:12px 12px 0 0;transition:bottom 0.5s ease-in-out;overflow:hidden;">'
+      +'<div style="background:#111;padding:8px 16px;display:flex;align-items:center;gap:10px"><span style="color:#fff;font-size:13px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+esc(ad.title)+'</span><span style="color:#888;font-size:11px">Ad</span></div>'
       +'<iframe src="'+esc(iUrl)+'" style="flex:1;border:0;width:100%;background:#fff"></iframe>'
       +'<div style="background:#111;padding:12px 16px;display:flex;gap:10px;align-items:center">'
       +'<a href="'+ad.click_url+'" target="_blank" rel="noopener" style="flex:1;background:#2563eb;color:#fff;padding:10px;border-radius:8px;text-align:center;text-decoration:none;font-weight:600;font-size:13px">'+esc(ad.cta_text)+'</a>'
       +'<button id="adnx-sk" onclick="adnxClose()" style="background:#333;border:none;color:#aaa;padding:10px 14px;border-radius:8px;cursor:pointer;font-size:13px" disabled>'+esc(String(ad.skip_after||5))+'s</button>'
       +'</div></div>');
+    setTimeout(function(){var o=document.getElementById('adnx-ol');if(o)o.style.bottom='0px';},100);
     var t2=ad.skip_after||5,iv2=setInterval(function(){t2--;var sb2=document.getElementById('adnx-sk');if(sb2)sb2.textContent=t2>0?t2+'s':'Skip';if(t2<=0){clearInterval(iv2);if(sb2){sb2.disabled=false;sb2.style.color='#fff';}}},1000);
-    w.adnxClose=function(){var o=document.getElementById('adnx-ol');if(o)o.remove();};
+    w.adnxClose=function(){var o=document.getElementById('adnx-ol');if(o){o.style.bottom='-400px';setTimeout(function(){o.remove();},500);}};
     return;
   }
   /* Banner */
@@ -93,7 +94,7 @@ function render(el,ad){
 }
 /* ── Serve ad into element ── */
 function serve(el,fmt,u){
-  fetch(W+'/serve?site_id='+encodeURIComponent(w.__adnx_site||'')+'&format='+encodeURIComponent(fmt)+'&page='+encodeURIComponent(location.href)+'&uid='+u,{credentials:'include'})
+  fetch(W+'/serve?site_id='+encodeURIComponent(w.__adnx_site||'')+'&format='+encodeURIComponent(fmt)+'&page='+encodeURIComponent(location.href)+'&uid='+u)
     .then(function(r){return r.status===200?r.json():null;})
     .then(function(data){if(data&&data.ad)render(el,data.ad);})
     .catch(function(){});
@@ -104,6 +105,59 @@ w.adnxServe=function(id,site,fmt){var u=uid();serve(d.getElementById(id),fmt||'b
 function init(){
   var u=uid();track(u);
   d.querySelectorAll('[data-adnx-slot]').forEach(function(s){
+    var fmt=s.getAttribute('data-adnx-format')||'banner_300x250';
+    if(!s.id)s.id='adnx-'+Math.random().toString(36).slice(2);
+    serve(s,fmt,u);
+  });
+  var last=location.href;
+  new MutationObserver(function(){if(location.href!==last){last=location.href;track(uid());}}).observe(d.body||d.documentElement,{subtree:true,childList:true});
+}
+if(d.readyState==='loading')d.addEventListener('DOMContentLoaded',init);else init();
+})(window,document);`;
+}
+
+// ── Main Worker export ─────────────────────────────────────────────────────────
+export default {
+  async fetch(req, env, ctx) {
+    // Attach ctx so background ops can use waitUntil()
+    env.ctx = ctx;
+
+    const url    = new URL(req.url);
+    const path   = url.pathname;
+    const method = req.method;
+
+    // CORS preflight
+    if (method === 'OPTIONS') return preflight();
+
+    // ── Routes ────────────────────────────────────────────────────────────────
+    if (path === '/ad.js')
+      return new Response(buildAdScript(url.origin), {
+        headers: {
+          'Content-Type':  'application/javascript; charset=utf-8',
+          'Cache-Control': 'public, max-age=3600',
+          ...CORS_HEADERS,
+        },
+      });
+
+    if (path === '/track'  && method === 'POST') return handleTrack(req, env);
+    if (path === '/serve')                        return handleServe(req, env);
+    if (path === '/click')                        return handleClick(req, env);
+
+    if (path === '/pixel.gif')
+      return new Response(PIXEL_GIF, {
+        headers: { 'Content-Type': 'image/gif', 'Cache-Control': 'no-store' },
+      });
+
+    if (path === '/analytics/publisher')  return handlePublisherAnalytics(req, env);
+    if (path === '/analytics/advertiser') return handleAdvertiserAnalytics(req, env);
+    if (path === '/analytics/admin')      return handleAdminAnalytics(req, env);
+
+    if (path === '/health')
+      return json({ status: 'ok', version: '3.1.0', ts: new Date().toISOString() });
+
+    return json({ error: 'not found', path }, 404);
+  },
+};  d.querySelectorAll('[data-adnx-slot]').forEach(function(s){
     var fmt=s.getAttribute('data-adnx-format')||'banner_300x250';
     if(!s.id)s.id='adnx-'+Math.random().toString(36).slice(2);
     serve(s,fmt,u);
